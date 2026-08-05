@@ -15,50 +15,60 @@ jobs:
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: changes
         with:
           filters: |
             dist:
               - "dist/**"
+              - "action.yml"
 
       - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v4
+        uses: gittools/actions/gitversion/setup@v4.7.0
         with:
           versionSpec: "6.x"
 
       - name: Determine Version
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v4
+        uses: gittools/actions/gitversion/execute@v4.7.0
 
-      - name: Create Release (tag)
+      - name: Create Release (tag) - fullSemVer
+        id: create_release
         if: ${{ steps.changes.outputs.dist == 'true' || github.event_name == 'workflow_dispatch' }}
-        uses: ncipollo/release-action@v1.20.0
+        uses: ncipollo/release-action@v1.21.0
         with:
           allowUpdates: false
           skipIfReleaseExists: true
           draft: false
-          makeLatest: false
+          makeLatest: true
           tag: v${{ steps.gitversion.outputs.semVer }}
           name: Release v${{ steps.gitversion.outputs.semVer }}
           generateReleaseNotes: true
           body:
             Release ${{ steps.gitversion.outputs.semVer }} of ${{ github.event.repository.name }}
 
-      - name: Create Release (latest)
+      - name: Create Release (tag) - major version
         if: ${{ steps.changes.outputs.dist == 'true' || github.event_name == 'workflow_dispatch' }}
-        uses: ncipollo/release-action@v1.20.0
+        uses: ncipollo/release-action@v1.21.0
         with:
           allowUpdates: true
           skipIfReleaseExists: false
           draft: false
-          makeLatest: true
-          tag: latest
-          name: Release v${{ steps.gitversion.outputs.semVer }}
+          makeLatest: false
+          tag: v${{ steps.gitversion.outputs.major }}
+          name: Release v${{ steps.gitversion.outputs.major }}
           generateReleaseNotes: true
           body:
-            Release ${{ steps.gitversion.outputs.semVer }} of ${{ github.event.repository.name }}
+            Release ${{ steps.gitversion.outputs.major }} of ${{ github.event.repository.name }}
+
+      - name: Update latest tag
+        if: ${{ steps.create_release.outputs.id != '' }}
+        run: |
+          RELEASE_TAG="v${{ steps.gitversion.outputs.semVer }}"
+          git fetch origin "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
+          git tag --force latest "$RELEASE_TAG"
+          git push origin refs/tags/latest:refs/tags/latest --force

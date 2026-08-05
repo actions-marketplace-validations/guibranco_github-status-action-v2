@@ -7,7 +7,7 @@
 
 ![Test](https://github.com/guibranco/github-status-action-v2/actions/workflows/test.yml/badge.svg)
 ![Build](https://github.com/guibranco/github-status-action-v2/actions/workflows/build.yml/badge.svg)
-![Create Release](https://github.com/guibranco/github-status-action-v2/actions/workflows/create-release.yml/badge.svg)
+![Create Release](https://github.com/guibranco/github-status-action-v2/actions/workflows/ci.yml/badge.svg)
 [![wakatime](https://wakatime.com/badge/github/guibranco/github-status-action-v2.svg)](https://wakatime.com/badge/github/guibranco/github-status-action-v2)
 
 Adds a status update to a commit. GitHub will always show the latest state of a context.
@@ -81,7 +81,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run the action
-        uses: guibranco/github-status-action-v2@latest
+        uses: guibranco/github-status-action-v2@v1
         with:
           authToken: ${{secrets.GITHUB_TOKEN}}
           context: "Test run"
